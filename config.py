@@ -17,8 +17,15 @@ EPG_URLS = [
 ]
 LOGO_BASE_URL = "https://live.fanmingming.cn/tv/{name}.png"
 
-# 覆盖全网活跃更新的源池（涵盖运营商专线、高校开源、公网 CDN 源）
+# 覆盖全网活跃更新的源池（涵盖运营商专线、台湾及港澳台专区、高校开源、公网 CDN 源）
 SOURCE_URLS = [
+    # 港澳台及台湾高可用专线源
+    "https://raw.githubusercontent.com/svefnz/IPTVN/Files/GAT.m3u",
+    "https://raw.githubusercontent.com/monnp179-prog/IPTV-taiwan-/main/liveTVList_fixed.m3u",
+    "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u",
+    "https://iptv-org.github.io/iptv/countries/tw.m3u",
+    "https://raw.githubusercontent.com/limajj2021/taiwan-iptv/main/playlist_static.m3u",
+    "https://raw.githubusercontent.com/cs3306/IPTV-Sources/main/data/output/iptv_collection.m3u",
     # 范明明 IPv6 运营商专网源
     "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
     # ibert 高可用镜像
@@ -64,6 +71,8 @@ CLEAN_PATTERNS = [
     r"-?8K",
     r"-?HEVC",
     r"-?HDR",
+    r"[\U00010000-\U0010ffff]",
+    r"[\u2600-\u27BF]",
     r"\s*-\s*",
     r"\s+",
 ]
@@ -118,11 +127,58 @@ CHANNEL_ALIASES = {
     "CGTN": "CGTN",
     "CGTN英语": "CGTN",
     "CGTN纪录": "CGTN纪录",
+    # 台湾主流频道名称归一化
+    "TVBSHD": "TVBS新闻",
+    "TVBSNEWS": "TVBS新闻",
+    "TVBS新闻台": "TVBS新闻",
+    "TVBS欢乐台": "TVBS欢乐台",
+    "TVBS精彩台": "TVBS精彩台",
+    "TVBS亚洲": "TVBS-Asia",
+    "中天新闻台": "中天新闻",
+    "中天综合台": "中天综合",
+    "中天娱乐台": "中天娱乐",
+    "东森新闻台": "东森新闻",
+    "东森综合台": "东森综合",
+    "东森电影台": "东森电影",
+    "东森戏剧台": "东森戏剧",
+    "东森幼幼台": "东森幼幼",
+    "东森洋片台": "东森洋片",
+    "东森超视": "东森超视",
+    "民视新闻台": "民视新闻",
+    "民视无线台": "民视无线",
+    "民视台湾台": "民视台湾",
+    "民视第一台": "民视第一台",
+    "台视新闻台": "台视新闻",
+    "台视主频": "台视",
+    "中视新闻台": "中视新闻",
+    "中视主频": "中视",
+    "华视新闻台": "华视新闻",
+    "华视主频": "华视",
+    "三立新闻台": "三立新闻",
+    "三立台湾台": "三立台湾",
+    "三立都会台": "三立都会",
+    "三立INEWS": "三立iNEWS",
+    "年代新闻台": "年代新闻",
+    "八大第一台": "八大第一台",
+    "八大综合台": "八大综合台",
+    "八大戏剧台": "八大戏剧台",
+    "纬来日本台": "纬来日本",
+    "纬来电影台": "纬来电影",
+    "纬来体育台": "纬来体育",
+    "纬来戏剧台": "纬来戏剧",
+    "纬来综合台": "纬来综合",
+    "纬来育乐台": "纬来育乐",
+    "公视主频": "公共电视",
+    "公视台语台": "公视台语",
+    "镜新闻MNEWS": "镜新闻",
+    "寰宇新闻台": "寰宇新闻",
 }
 
 GROUP_RULES = [
     ("央视频道", r"^CCTV|CGTN|兵器科技|第一剧场|风云剧场|怀旧剧场|电视指南|风云音乐|风云足球"),
-    ("卫视频道", r".*卫视|凤凰卫视|翡翠台|星空卫视"),
+    ("卫视频道", r".*卫视"),
+    ("台湾频道", r"中天|TVBS|东森|三立|民视|台视|华视|中视|纬来|年代|壹电视|八大|公视|非凡|国兴|靖天|龙祥|博斯|台湾|臺灣|寰宇|镜新闻|大立|番薯|客家|大爱"),
+    ("港澳频道", r"凤凰|翡翠|明珠|本港|无线|J2|ViuTV|RTHK|港台|莲花|澳视|澳亚|澳门|美亚|华丽|星空"),
     ("影视轮播", r".*电影|.*影院|.*剧场|动作|经典|喜剧|大片|悬疑|谍战"),
     ("体育赛事", r".*体育|.*足球|.*台球|.*网球|.*五星|劲爆|高尔夫"),
     ("儿童少儿", r".*少儿|.*动画|.*卡通|卡酷|嘉佳|金鹰|宝贝"),
