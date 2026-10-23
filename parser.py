@@ -60,6 +60,10 @@ def classify_group(channel_name: str, existing_group: str = "") -> str:
             return "央视频道"
         if "卫视" in clean_grp:
             return "卫视频道"
+        if "台" in clean_grp or "港" in clean_grp or "澳" in clean_grp:
+            if "台湾" in clean_grp or "台灣" in clean_grp:
+                return "台湾频道"
+            return "港澳频道"
         if any(w in clean_grp for w in ["影", "剧", "片", "电影"]):
             return "影视轮播"
         if "体育" in clean_grp:
