@@ -1,7 +1,7 @@
 """
 直播流双层深度验效模块
 同时检测 M3U8 索引与底层真实 TS/FLV 视频切片
-严苛过滤内网虚假源（如 10.x、192.168.x）以及切片 404/超时死链，杜绝播放器报错闪退
+严苛过滤内网虚假源（如 10.x、192.168.x）以及切片 404/超时/文本伪装死链，杜绝播放器报错闪退
 """
 import ipaddress
 import time
@@ -10,6 +10,15 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import MAX_WORKERS, REQUEST_TIMEOUT, USER_AGENTS
 from parser import ChannelStream
+
+BLACKLIST_KEYWORDS = [
+    "youtube.com",
+    "youtu.be",
+    "nosignal",
+    "no_signal",
+    "test_stream",
+    "catvod.com",
+]
 
 
 def is_private_or_invalid_host(url: str) -> bool:
@@ -39,10 +48,16 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
     """
     双层深度真实验效探测：
     第 1 层：流式请求 M3U8 播放列表，防死锁读取前 8KB 索引数据
-    第 2 层：解析首个 TS 视频切片，精确过滤私有内网 IP
-    第 3 层：实际读取 TS 切片前 1024 字节，严格校验 MPEG-TS 0x47 同步字节或 FLV 标头
+    第 2 层：解析首个 TS 视频切片，精确过滤私有内网 IP 与黑名单
+    第 3 层：实际读取 TS 切片二进制流，严格校验 MPEG-TS 0x47 同步字节或 FLV 协议头
     """
     t0 = time.time()
+
+    # 过滤黑名单关键词（无信号循环、YouTube 无法直解的网页、已知失效域名）
+    if any(k in stream.url.lower() for k in BLACKLIST_KEYWORDS):
+        stream.is_active = False
+        return stream
+
     headers = {
         "User-Agent": USER_AGENTS[0],
         "Accept": "*/*",
@@ -66,8 +81,8 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
             stream.is_active = False
             return stream
 
-        # 如果直接返回原生二进制 TS 视频流或 FLV 流
-        if first_bytes.startswith(b"\x47") or first_bytes.startswith(b"FLV"):
+        # 如果直接返回原生二进制 TS 视频流（包长188，首字节0x47，第二包也为0x47）或 FLV 流
+        if (len(first_bytes) >= 376 and first_bytes[0] == 0x47 and first_bytes[188] == 0x47) or first_bytes.startswith(b"FLV"):
             stream.is_active = True
             stream.latency = int((time.time() - t0) * 1000)
             return stream
@@ -105,6 +120,10 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
                 stream.is_active = False
                 return stream
 
+        if any(k in ts_url.lower() for k in BLACKLIST_KEYWORDS):
+            stream.is_active = False
+            return stream
+
         # 核心过滤：很多伪直播源的 TS 切片指向运营商机房内网（如 10.10.0.1 / 192.168.x.x），外部无法播放
         if is_private_or_invalid_host(ts_url):
             stream.is_active = False
@@ -116,16 +135,32 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
             chunk = next(r_ts.iter_content(1024), b"")
             r_ts.close()
 
-            # 严格验证真实媒体二进制特征，彻底杜绝 404/403 的 HTML 报错页伪装
-            if len(chunk) >= 188:
-                is_valid_ts = (chunk[0] == 0x47 or b"\x47" in chunk[:188])
-                is_valid_flv = chunk.startswith(b"FLV")
-                is_valid_mp4 = b"ftyp" in chunk[:32]
+            # 严格过滤伪装切片：
+            # 1. 绝对不能是文本内容（杜绝 #EXTM3U 嵌套死循环、HTML 404/403 页面、JSON 错误消息）
+            if (
+                chunk.startswith(b"#")
+                or chunk.startswith(b"<")
+                or chunk.startswith(b"{")
+                or chunk.startswith(b"\r\n")
+                or b"<html" in chunk[:200].lower()
+            ):
+                stream.is_active = False
+                return stream
 
-                if is_valid_ts or is_valid_flv or is_valid_mp4:
-                    stream.is_active = True
-                    stream.latency = int((time.time() - t0) * 1000)
-                    return stream
+            # 2. 严格 MPEG-TS 校验规范（ISO/IEC 13818-1）：
+            # 第一个包首字节为 0x47，且第二个包（偏移188字节处）也必须是 0x47 同步字节！
+            is_valid_ts = (
+                len(chunk) >= 188
+                and chunk[0] == 0x47
+                and (len(chunk) < 189 or chunk[188] == 0x47)
+            )
+            is_valid_flv = chunk.startswith(b"FLV")
+            is_valid_mp4 = b"ftyp" in chunk[:32] or chunk.startswith(b"\x00\x00\x00")
+
+            if is_valid_ts or is_valid_flv or is_valid_mp4:
+                stream.is_active = True
+                stream.latency = int((time.time() - t0) * 1000)
+                return stream
 
     except Exception:
         pass
