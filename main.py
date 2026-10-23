@@ -117,12 +117,12 @@ def main():
         print("  -> 规则：必须 HTTP 200/206 且能真实拉取到有效流媒体切片，彻底剔除死链、超时与报错拦截页。")
 
         def on_progress(completed, total, active_count, current_stream):
-            if completed % 25 == 0 or completed == total:
+            if completed % 100 == 0 or completed == total:
                 percent = (completed / total) * 100
-                sys.stdout.write(
-                    f"\r  -> 验效进度: [{completed}/{total}] {percent:5.1f}% | 实测真实可用流: {active_count} 个"
+                print(
+                    f"  -> 验效进度: [{completed}/{total}] {percent:5.1f}% | 实测真实可用流: {active_count} 个",
+                    flush=True
                 )
-                sys.stdout.flush()
 
         active_streams = verify_streams_batch(
             crawled_streams,
