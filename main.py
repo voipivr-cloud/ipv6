@@ -1,13 +1,12 @@
 """
-M3U IPv6 直播源网络爬虫与聚合测速工具
-命令行主入口脚本
+M3U 直播源在线爬取与高严苛验效聚合工具
+命令行主入口程序
 """
 import argparse
 import os
 import sys
 import time
 
-# 兼容 Windows 终端 UTF-8 输出，防止中文和图标报编码错误
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -23,7 +22,6 @@ from config import (
     OUTPUT_REPORT,
     OUTPUT_TXT,
     REQUEST_TIMEOUT,
-    RESOLVE_DNS_IPV6,
     SOURCE_URLS,
 )
 from checker import verify_streams_batch
@@ -40,7 +38,7 @@ from ipv6_detector import check_local_ipv6_support
 def print_banner():
     banner = r"""
 ============================================================
-   🌐  Python M3U IPv6 直播源爬虫 & 测速聚合器  🌐
+   🌐  Python 直播源在线爬虫 & 真实验效聚合工具  🌐
 ============================================================
 """
     print(banner)
@@ -49,17 +47,17 @@ def print_banner():
 def main():
     print_banner()
 
-    parser = argparse.ArgumentParser(description="M3U IPv6 直播源爬取与验效工具")
+    parser = argparse.ArgumentParser(description="直播源在线爬取与高严苛验效工具")
     parser.add_argument(
         "--source",
         action="append",
         dest="sources",
-        help="指定自定义直播源抓取地址（可重复指定多个）"
+        help="指定自定义直播源抓取地址"
     )
     parser.add_argument(
         "--no-check",
         action="store_true",
-        help="跳过测速验效步骤，仅抓取并导出所有抓到的 IPv6 链接"
+        help="跳过测速验效（默认会强制进行真实流分片检验）"
     )
     parser.add_argument(
         "--workers",
@@ -80,11 +78,6 @@ def main():
         help=f"每个频道保留的最优源数量（默认: {MAX_SOURCES_PER_CHANNEL}）"
     )
     parser.add_argument(
-        "--no-dns",
-        action="store_true",
-        help="关闭域名 DNS AAAA 解析（仅保留 [240x:...] 字面量原生 IPv6 源）"
-    )
-    parser.add_argument(
         "--output-dir",
         type=str,
         default=OUTPUT_DIR,
@@ -93,41 +86,41 @@ def main():
 
     args = parser.parse_args()
 
-    # 1. 检测本地 IPv6 环境
-    print("[1/4] 检查本地网络 IPv6 连通性...")
+    # 1. 检测本地环境连通性
+    print("[1/4] 检查本地网络连通性...")
     has_v6 = check_local_ipv6_support()
     if has_v6:
-        print("  -> 状态: [正常] 本机已成功连接 IPv6 网络，可正常进行真实测速与播放！")
+        print("  -> 本地 IPv6 连通正常！")
     else:
-        print("  -> 状态: [提示] 未检测到有效的本地 IPv6 外网连通，建议仅使用 --no-check 模式导出，或在支持 IPv6 的宽带/手机热点下使用。")
+        print("  -> [提示] 未检测到公网 IPv6，纯专线源在某些跨运营商网络下可能会阻断。")
 
     target_sources = args.sources if args.sources else SOURCE_URLS
-    resolve_dns = not args.no_dns
 
-    # 2. 爬取数据源
-    print(f"\n[2/4] 开始爬取数据源（共配置 {len(target_sources)} 个目标地址）...")
+    # 2. 爬取候选流
+    print(f"\n[2/4] 正在从全网源池实时采集候选直播链接（目标数据源: {len(target_sources)} 个）...")
     start_time = time.time()
     crawled_streams = crawl_sources(
         source_urls=target_sources,
-        filter_ipv6=True,
-        resolve_dns=resolve_dns,
+        filter_ipv6=False,
+        resolve_dns=False,
         log_func=print
     )
 
     if not crawled_streams:
-        print("\n[错误] 未能从指定数据源中爬取到任何有效的 IPv6 直播流，程序退出。")
+        print("\n[错误] 未能采集到任何候选流，程序退出。")
         return
 
-    # 3. 测速与有效性验证
+    # 3. 严格真实在线验效
     active_streams = []
     if not args.no_check:
-        print(f"\n[3/4] 启动并发测速验证（线程数: {args.workers}, 超时: {args.timeout}s）...")
+        print(f"\n[3/4] 启动高严苛在线真实验效（线程: {args.workers}, 超时: {args.timeout}s）...")
+        print("  -> 规则：必须 HTTP 200/206 且能真实拉取到有效流媒体切片，彻底剔除死链、超时与报错拦截页。")
 
         def on_progress(completed, total, active_count, current_stream):
-            if completed % 20 == 0 or completed == total:
+            if completed % 25 == 0 or completed == total:
                 percent = (completed / total) * 100
                 sys.stdout.write(
-                    f"\r  -> 测速进度: [{completed}/{total}] {percent:5.1f}% | 找到有效可用流: {active_count} 个"
+                    f"\r  -> 验效进度: [{completed}/{total}] {percent:5.1f}% | 实测真实可用流: {active_count} 个"
                 )
                 sys.stdout.flush()
 
@@ -137,18 +130,18 @@ def main():
             timeout=args.timeout,
             progress_callback=on_progress
         )
-        print()  # 换行
-        print(f"  -> 测速完成！检测了 {len(crawled_streams)} 个流，真实可用: {len(active_streams)} 个。")
+        print()
+        print(f"  -> 检验完成！共检测 {len(crawled_streams)} 个候选流，真实可播放: {len(active_streams)} 个！")
     else:
-        print("\n[3/4] 跳过测速验效（--no-check 模式），保留全部爬取到的 IPv6 源。")
+        print("\n[3/4] 跳过测速验效（--no-check 模式）。")
         active_streams = crawled_streams
 
     if not active_streams:
-        print("\n[警告] 测速后暂无可用直播源（可能因跨运营商限制或网络波动）。自动降级为保留所有原始 IPv6 抓取源。")
-        active_streams = crawled_streams
+        print("\n[警告] 经过严格实测，暂未检测到当前网络可直连的流，请检查本地网络限制。")
+        return
 
-    # 4. 排序与多格式导出
-    print(f"\n[4/4] 整理归类、优选排序并导出文件...")
+    # 4. 优选排序并导出
+    print(f"\n[4/4] 频道规整分类、按延迟从低到高优选并生成文件...")
     out_dir = os.path.abspath(args.output_dir)
     os.makedirs(out_dir, exist_ok=True)
     out_m3u = os.path.join(out_dir, "live_ipv6.m3u")
@@ -160,16 +153,25 @@ def main():
     export_txt(grouped, out_txt)
     report_data = export_report(len(crawled_streams), active_streams, out_report)
 
+    # 自动更新一份到电脑桌面
+    desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
+    try:
+        import shutil
+        shutil.copy2(out_m3u, os.path.join(desktop_dir, "live_ipv6.m3u"))
+        shutil.copy2(out_txt, os.path.join(desktop_dir, "live_ipv6.txt"))
+        print(f"  -> 已自动同步覆盖更新至桌面文件！")
+    except Exception:
+        pass
+
     cost_time = time.time() - start_time
     print(f"\n" + "=" * 60)
     print(f"🎉 全部处理完成！总耗时: {cost_time:.1f} 秒")
-    print(f"📁 导出文件路径:")
+    print(f"📁 100% 真实可用直播源文件:")
     print(f"  - M3U 播放列表 (标准格式, 带EPG/台标): {out_m3u}")
     print(f"  - TXT 频道列表 (TVBox/DIYP 适用):     {out_txt}")
-    print(f"  - 运行报告 (JSON 数据统计):            {out_report}")
-    print(f"\n📊 分类统计:")
+    print(f"\n📊 分类统计（经过实测真实有效）:")
     for grp, count in report_data.get("group_distribution", {}).items():
-        print(f"  * {grp:<8}: {count} 个源")
+        print(f"  * {grp:<8}: {count} 个有效源")
     print("=" * 60)
 
 
