@@ -1,9 +1,11 @@
 """
-直播流并发测速与真实有效性检验模块
-执行真实请求，严格检验 HTTP 状态与首段音视频切片数据，杜绝失效死链与拦截页
+直播流双层深度验效模块
+同时检测 M3U8 索引与底层真实 TS 视频切片
+严苛过滤内网虚假源（如 10.x、192.168.x）以及切片超时死链，杜绝播放器报错
 """
 import time
 import requests
+from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import MAX_WORKERS, REQUEST_TIMEOUT, USER_AGENTS
 from parser import ChannelStream
@@ -11,7 +13,9 @@ from parser import ChannelStream
 
 def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) -> ChannelStream:
     """
-    真实探测单个直播源的可用性与延迟
+    双层深度探测：
+    第 1 层：请求 M3U8 播放列表，验证状态为 200 且包含切片索引
+    第 2 层：解析首个 TS 视频切片，验证公网可达性并实际读取 512 字节视频二进制流
     """
     t0 = time.time()
     headers = {
@@ -24,46 +28,48 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
     session.trust_env = False
 
     try:
-        response = session.get(
-            stream.url,
-            headers=headers,
-            timeout=timeout,
-            stream=True,
-            allow_redirects=True
-        )
-        latency = int((time.time() - t0) * 1000)
+        # 第一层：检查 M3U8 索引
+        r_m3u8 = session.get(stream.url, headers=headers, timeout=timeout)
+        if r_m3u8.status_code not in [200, 206]:
+            stream.is_active = False
+            return stream
 
-        # 1. 严格检查状态码必须为 200 或 206
-        if response.status_code in [200, 206]:
-            content_type = response.headers.get("Content-Type", "").lower()
+        content_text = r_m3u8.text
+        # 如果是直接返回的单视频流或 TS 流
+        if not ("#EXT" in content_text):
+            if r_m3u8.content.startswith(b"\x47") or r_m3u8.content.startswith(b"FLV"):
+                stream.is_active = True
+                stream.latency = int((time.time() - t0) * 1000)
+                return stream
+            stream.is_active = False
+            return stream
 
-            # 2. 读取前 1024 字节内容进行真实流切片校验
-            chunk = next(response.iter_content(1024), b"")
-            response.close()
+        # 第二层：提取 M3U8 内部的真实 TS 切片链接
+        ts_lines = [l.strip() for l in content_text.splitlines() if l.strip() and not l.startswith("#")]
+        if not ts_lines:
+            stream.is_active = False
+            return stream
 
-            if len(chunk) > 10:
-                chunk_lower = chunk.lower()
+        ts_url = ts_lines[0]
+        if not ts_url.startswith("http"):
+            ts_url = urljoin(stream.url, ts_url)
 
-                # 排除 HTML 报错与运营商拦截伪 200 页面
-                if b"<html" in chunk_lower or b"<!doctype" in chunk_lower:
-                    stream.is_active = False
-                    stream.latency = -1
-                    return stream
+        # 核心过滤：很多伪直播源的 TS 切片指向运营商机房内网（10.x.x.x / 192.168.x.x），外部无法播放
+        intranet_patterns = ["10.", "192.168.", "127.0.0.1", "172.16.", "172.17.", "172.18.", "172.19.", "172.20."]
+        if any(ip_prefix in ts_url for ip_prefix in intranet_patterns):
+            stream.is_active = False
+            return stream
 
-                # 必须符合流媒体规范（M3U8 包含 #EXT 标识，或 TS 包含 0x47 同步字节，或 flv 包含 FLV 头）
-                is_valid_media = (
-                    b"#ext" in chunk_lower or
-                    chunk.startswith(b"\x47") or
-                    chunk.startswith(b"FLV") or
-                    "mpegurl" in content_type or
-                    "video" in content_type or
-                    "octet-stream" in content_type
-                )
+        # 第三层：实际请求首个 TS 视频切片并读取视频二进制
+        r_ts = session.get(ts_url, headers=headers, timeout=timeout, stream=True)
+        if r_ts.status_code in [200, 206]:
+            chunk = next(r_ts.iter_content(512), b"")
+            r_ts.close()
 
-                if is_valid_media:
-                    stream.is_active = True
-                    stream.latency = latency
-                    return stream
+            if len(chunk) > 10 and b"<html" not in chunk.lower():
+                stream.is_active = True
+                stream.latency = int((time.time() - t0) * 1000)
+                return stream
 
     except Exception:
         pass
@@ -79,7 +85,7 @@ def verify_streams_batch(
     timeout: float = REQUEST_TIMEOUT,
     progress_callback=None
 ) -> list[ChannelStream]:
-    """批量多线程测速与验效，仅返回通过实测的真有效流"""
+    """批量多线程双层深度测速与切片验效"""
     active_streams = []
     total = len(streams)
     completed = 0
