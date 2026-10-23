@@ -19,6 +19,8 @@ from parser import ChannelStream
 GROUP_ORDER = [
     "央视频道",
     "卫视频道",
+    "台湾频道",
+    "港澳频道",
     "影视轮播",
     "体育赛事",
     "儿童少儿",
