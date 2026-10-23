@@ -2,11 +2,11 @@ name: Auto Update IPv6 IPTV
 
 on:
   schedule:
-    - cron: '0 20 * * *'  # 每天北京时间凌晨 04:00 自动更新
-  workflow_dispatch:      # 支持手动触发
+    - cron: '0 20 * * *'  # 每天北京时间凌晨 04:00 自动运行
+  workflow_dispatch:      # 支持网页手动点击运行
 
 jobs:
-  crawl:
+  crawl_and_verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -22,13 +22,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Run IPv6 Crawler
+      - name: Run Crawler with Strict Live Verification
         run: |
-          python main.py --no-check
+          python main.py --workers 35 --timeout 2.5
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Verified Streams
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add output/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update IPv6 IPTV playlists [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update: verified playable streams only [skip ci]" && git push)
