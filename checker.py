@@ -12,8 +12,6 @@ from config import MAX_WORKERS, REQUEST_TIMEOUT, USER_AGENTS
 from parser import ChannelStream
 
 BLACKLIST_KEYWORDS = [
-    "youtube.com",
-    "youtu.be",
     "nosignal",
     "no_signal",
     "test_stream",
@@ -65,7 +63,26 @@ def test_single_stream(stream: ChannelStream, timeout: float = REQUEST_TIMEOUT) 
     }
 
     session = requests.Session()
-    session.trust_env = False
+    # 非 YouTube 直播流跳过本地代理环境以保障电信运营商专网测速纯净度
+    if "youtube.com" not in stream.url.lower() and "youtu.be" not in stream.url.lower():
+        session.trust_env = False
+
+    # 对 YouTube 频道流进行网络与活跃度探测（允许 200, 301, 302 响应）
+    if "youtube.com" in stream.url.lower() or "youtu.be" in stream.url.lower():
+        try:
+            r_yt = session.get(stream.url, headers=headers, timeout=(timeout, timeout), stream=True)
+            if r_yt.status_code in [200, 301, 302]:
+                first_chunk = next(r_yt.iter_content(2048), b"")
+                r_yt.close()
+                if len(first_chunk) > 50:
+                    stream.is_active = True
+                    stream.latency = int((time.time() - t0) * 1000)
+                    return stream
+            r_yt.close()
+        except Exception:
+            pass
+        stream.is_active = False
+        return stream
 
     try:
         # 第一层：流式检查 M3U8 索引（必须 stream=True，避免读取无尽直播流导致工作线程卡死）
