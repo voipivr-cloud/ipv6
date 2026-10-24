@@ -48,10 +48,14 @@ def normalize_channel_name(raw_name: str) -> str:
     return cleaned if cleaned else name
 
 
-def classify_group(channel_name: str, existing_group: str = "") -> str:
-    """根据频道名称和原有分组，自动划分标准类别"""
+def classify_group(channel_name: str, existing_group: str = "", url: str = "") -> str:
+    """根据频道名称、原有分组和 URL，自动划分标准类别"""
+    # 优先归类 YouTube 频道
+    if "youtube.com" in url.lower() or "youtu.be" in url.lower() or "youtube" in existing_group.lower() or "油管" in existing_group or "(yt)" in channel_name.lower() or "（yt）" in channel_name.lower():
+        return "YouTube频道"
+
     clean_grp = re.sub(r"[^\w\u4e00-\u9fa5]", "", existing_group)
-    if any(w in clean_grp for w in ["宗教", "嗅探", "夜视", "夜視", "成人", "福利", "解说", "游戏", "购物", "广播", "收音", "YouTube", "VIP"]):
+    if any(w in clean_grp for w in ["宗教", "嗅探", "夜视", "夜視", "成人", "福利", "解说", "游戏", "购物", "广播", "收音", "VIP"]):
         return "过滤频道"
 
     for group_name, rule_regex in GROUP_RULES:
@@ -63,6 +67,8 @@ def classify_group(channel_name: str, existing_group: str = "") -> str:
             return "央视频道"
         if "卫视" in clean_grp:
             return "卫视频道"
+        if "youtube" in clean_grp.lower() or "油管" in clean_grp:
+            return "YouTube频道"
         if "台" in clean_grp or "港" in clean_grp or "澳" in clean_grp:
             if "台湾" in clean_grp or "台灣" in clean_grp:
                 return "台湾频道"
@@ -119,9 +125,6 @@ def parse_m3u_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
                 raw_title = line.split("/")[-1].split("?")[0]
 
             norm_name = normalize_channel_name(raw_title)
-            group = classify_group(norm_name, current_meta.get("group-title", "") if current_meta else "")
-            if group == "过滤频道":
-                continue
 
             # 处理可能用 # 拼接的多线路
             raw_urls = line.split("#")
@@ -130,8 +133,12 @@ def parse_m3u_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
                 if not (cleaned_url.startswith("http://") or cleaned_url.startswith("https://")):
                     continue
 
+                group = classify_group(norm_name, current_meta.get("group-title", "") if current_meta else "", url=cleaned_url)
+                if group == "过滤频道":
+                    continue
+
                 is_v6, v6_type, isp_info = is_ipv6_url(cleaned_url, resolve_dns=resolve_dns)
-                if filter_ipv6 and not is_v6:
+                if filter_ipv6 and not is_v6 and group != "YouTube频道":
                     continue
 
                 stream = ChannelStream(
@@ -174,9 +181,6 @@ def parse_txt_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
             url_part = parts[1].strip()
 
             norm_name = normalize_channel_name(raw_title)
-            group = classify_group(norm_name, current_group)
-            if group == "过滤频道":
-                continue
 
             # 支持一行包含多个用 # 隔开的 URL 或 $ 分隔的说明
             raw_urls = url_part.split("#")
@@ -185,8 +189,12 @@ def parse_txt_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
                 if not (cleaned_url.startswith("http://") or cleaned_url.startswith("https://")):
                     continue
 
+                group = classify_group(norm_name, current_group, url=cleaned_url)
+                if group == "过滤频道":
+                    continue
+
                 is_v6, v6_type, isp_info = is_ipv6_url(cleaned_url, resolve_dns=resolve_dns)
-                if filter_ipv6 and not is_v6:
+                if filter_ipv6 and not is_v6 and group != "YouTube频道":
                     continue
 
                 stream = ChannelStream(
