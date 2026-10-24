@@ -3,7 +3,7 @@
 支持 GitHub Raw 源直连与镜像自动故障切换，支持 M3U 与 TXT 格式自动识别
 """
 import requests
-from config import GITHUB_MIRRORS, SOURCE_URLS, USER_AGENTS
+from config import CURATED_STREAMS, GITHUB_MIRRORS, SOURCE_URLS, USER_AGENTS
 from parser import ChannelStream, parse_m3u_content, parse_txt_content
 
 
@@ -47,6 +47,26 @@ def crawl_sources(
 
     all_streams: list[ChannelStream] = []
     seen_urls = set()
+
+    # 优先注入重点精选频道专线（民视无线台 FTV CH6、民视新闻台 HD、三立戏剧台、TVBS等，优先保证收录）
+    curated_count = 0
+    for cur in CURATED_STREAMS:
+        if cur["url"] not in seen_urls:
+            seen_urls.add(cur["url"])
+            st = ChannelStream(
+                name=cur["name"],
+                raw_name=cur["name"],
+                url=cur["url"],
+                group=cur.get("group", "台湾频道"),
+                tvg_id=cur.get("tvg_id", cur["name"]),
+                tvg_name=cur.get("tvg_name", cur["name"]),
+                tvg_logo=cur.get("tvg_logo", ""),
+                is_ipv6=False
+            )
+            all_streams.append(st)
+            curated_count += 1
+    if curated_count > 0:
+        log_func(f"[*] 成功注入 {curated_count} 个精选重点主流频道专线（含民视无线台 FTV CH6、三立戏剧台等）。")
 
     for idx, src_url in enumerate(source_urls, start=1):
         log_func(f"[{idx}/{len(source_urls)}] 正在抓取数据源: {src_url} ...")
