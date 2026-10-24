@@ -50,12 +50,15 @@ def normalize_channel_name(raw_name: str) -> str:
 
 def classify_group(channel_name: str, existing_group: str = "") -> str:
     """根据频道名称和原有分组，自动划分标准类别"""
+    clean_grp = re.sub(r"[^\w\u4e00-\u9fa5]", "", existing_group)
+    if any(w in clean_grp for w in ["宗教", "嗅探", "夜视", "夜視", "成人", "福利", "解说", "游戏", "购物", "广播", "收音", "YouTube", "VIP"]):
+        return "过滤频道"
+
     for group_name, rule_regex in GROUP_RULES:
         if re.search(rule_regex, channel_name, re.IGNORECASE):
             return group_name
 
     if existing_group and existing_group not in ["其他频道", "未分类", "Undefined", "General"]:
-        clean_grp = re.sub(r"[^\w\u4e00-\u9fa5]", "", existing_group)
         if "央视" in clean_grp:
             return "央视频道"
         if "卫视" in clean_grp:
@@ -64,16 +67,14 @@ def classify_group(channel_name: str, existing_group: str = "") -> str:
             if "台湾" in clean_grp or "台灣" in clean_grp:
                 return "台湾频道"
             return "港澳频道"
-        if any(w in clean_grp for w in ["影", "剧", "片", "电影"]):
+        if any(w in clean_grp for w in ["影", "剧", "片", "电影", "轮播"]):
             return "影视轮播"
         if "体育" in clean_grp:
             return "体育赛事"
         if any(w in clean_grp for w in ["少儿", "动画", "卡通"]):
             return "儿童少儿"
-        if "地方" in clean_grp:
+        if "地方" in clean_grp or any(prov in clean_grp for prov in ["北京", "天津", "上海", "重庆", "河北", "山西", "辽宁", "吉林", "黑龙江", "江苏", "浙江", "安徽", "福建", "江西", "山东", "河南", "湖北", "湖南", "广东", "海南", "四川", "贵州", "云南", "陕西", "甘肃", "青海", "内蒙", "广西", "西藏", "宁夏", "新疆"]):
             return "地方频道"
-        if clean_grp:
-            return clean_grp
 
     return "地方频道" if "台" in channel_name else "其他频道"
 
@@ -119,6 +120,8 @@ def parse_m3u_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
 
             norm_name = normalize_channel_name(raw_title)
             group = classify_group(norm_name, current_meta.get("group-title", "") if current_meta else "")
+            if group == "过滤频道":
+                continue
 
             # 处理可能用 # 拼接的多线路
             raw_urls = line.split("#")
@@ -172,6 +175,8 @@ def parse_txt_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
 
             norm_name = normalize_channel_name(raw_title)
             group = classify_group(norm_name, current_group)
+            if group == "过滤频道":
+                continue
 
             # 支持一行包含多个用 # 隔开的 URL 或 $ 分隔的说明
             raw_urls = url_part.split("#")
