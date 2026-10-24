@@ -19,13 +19,11 @@ LOGO_BASE_URL = "https://live.fanmingming.cn/tv/{name}.png"
 
 # 覆盖全网活跃更新的源池（涵盖运营商专线、台湾及港澳台专区、高校开源、公网 CDN 源）
 SOURCE_URLS = [
-    # 港澳台及台湾高可用专线源
+    # 港澳台及台湾高可用专线源（精选专线，排除夹带外网无关视频的脏源）
     "https://raw.githubusercontent.com/svefnz/IPTVN/Files/GAT.m3u",
     "https://raw.githubusercontent.com/monnp179-prog/IPTV-taiwan-/main/liveTVList_fixed.m3u",
-    "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u",
     "https://iptv-org.github.io/iptv/countries/tw.m3u",
     "https://raw.githubusercontent.com/limajj2021/taiwan-iptv/main/playlist_static.m3u",
-    "https://raw.githubusercontent.com/cs3306/IPTV-Sources/main/data/output/iptv_collection.m3u",
     # 范明明 IPv6 运营商专网源
     "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u",
     # ibert 高可用镜像
