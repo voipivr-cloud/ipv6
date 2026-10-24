@@ -186,6 +186,7 @@ CHANNEL_ALIASES = {
 }
 
 GROUP_RULES = [
+    ("YouTube频道", r"YouTube|油管|(?<!\w)YT(?!\w)"),
     ("央视频道", r"^CCTV|CGTN|兵器科技|第一剧场|风云剧场|怀旧剧场|电视指南|风云音乐|风云足球"),
     ("卫视频道", r".*卫视"),
     ("台湾频道", r"(?<!易)中天|TVBS|东森|三立|民视|FTV|台视|TTV|华视|CTS|中视|CTV|纬来|年代|壹电视|八大|公视|PTS|非凡|国兴|靖天|龙祥|博斯|台湾|臺灣|寰宇|镜新闻|大立|番薯|客家|大爱"),
@@ -325,5 +326,110 @@ CURATED_STREAMS = [
         "tvg_id": "凤凰香港",
         "tvg_name": "凤凰香港台",
         "tvg_logo": "https://live.fanmingming.cn/tv/凤凰香港.png"
+    },
+    # YouTube 官方实时高清直播流专区
+    {
+        "name": "三立新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=QsGswQvRmtU",
+        "group": "YouTube频道",
+        "tvg_id": "三立新闻",
+        "tvg_name": "三立新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/三立新闻.png"
+    },
+    {
+        "name": "三立iNEWS (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=pF507BLtbqU",
+        "group": "YouTube频道",
+        "tvg_id": "三立iNEWS",
+        "tvg_name": "三立iNEWS",
+        "tvg_logo": "https://live.fanmingming.cn/tv/三立iNEWS.png"
+    },
+    {
+        "name": "民视新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=ylYJSBUgaMA",
+        "group": "YouTube频道",
+        "tvg_id": "民视新闻",
+        "tvg_name": "民视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视新闻.png"
+    },
+    {
+        "name": "民视第一台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=eP5gJqD8vB8",
+        "group": "YouTube频道",
+        "tvg_id": "民视第一台",
+        "tvg_name": "民视第一台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视第一台.png"
+    },
+    {
+        "name": "民视台湾台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=yeYC0mbSIOo",
+        "group": "YouTube频道",
+        "tvg_id": "民视台湾",
+        "tvg_name": "民视台湾台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视台湾.png"
+    },
+    {
+        "name": "TVBS新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=2mCSYvcfhtc",
+        "group": "YouTube频道",
+        "tvg_id": "TVBS新闻",
+        "tvg_name": "TVBS新闻",
+        "tvg_logo": "https://live.fanmingming.cn/tv/TVBS新闻.png"
+    },
+    {
+        "name": "中天电视新闻 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=lu_BJKzxG6E",
+        "group": "YouTube频道",
+        "tvg_id": "中天新闻",
+        "tvg_name": "中天电视",
+        "tvg_logo": "https://live.fanmingming.cn/tv/中天新闻.png"
+    },
+    {
+        "name": "东森新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=R2iMq5LKXco",
+        "group": "YouTube频道",
+        "tvg_id": "东森新闻",
+        "tvg_name": "东森新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/东森新闻.png"
+    },
+    {
+        "name": "台视新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=xL0ch83RAK8",
+        "group": "YouTube频道",
+        "tvg_id": "台视新闻",
+        "tvg_name": "台视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/台视新闻.png"
+    },
+    {
+        "name": "华视新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=wM0g8EoUZ_E",
+        "group": "YouTube频道",
+        "tvg_id": "华视新闻",
+        "tvg_name": "华视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/华视新闻.png"
+    },
+    {
+        "name": "公视新闻台 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=quwsmvs_kbc",
+        "group": "YouTube频道",
+        "tvg_id": "公共电视",
+        "tvg_name": "公视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/公共电视.png"
+    },
+    {
+        "name": "镜新闻 MNews (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=5n0y6b0Sp2k",
+        "group": "YouTube频道",
+        "tvg_id": "镜新闻",
+        "tvg_name": "镜新闻",
+        "tvg_logo": "https://live.fanmingming.cn/tv/镜新闻.png"
+    },
+    {
+        "name": "寰宇新闻 (YouTube Live)",
+        "url": "https://www.youtube.com/watch?v=6IquAgfvYmc",
+        "group": "YouTube频道",
+        "tvg_id": "寰宇新闻",
+        "tvg_name": "寰宇新闻",
+        "tvg_logo": "https://live.fanmingming.cn/tv/寰宇新闻.png"
     },
 ]
