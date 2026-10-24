@@ -89,11 +89,8 @@ def export_m3u(grouped_streams: dict[str, list[ChannelStream]], file_path: str =
         f'#EXTM3U x-tvg-url="{",".join(EPG_URLS)}"'
     ]
 
-    # 按照 GROUP_ORDER 顺序输出
-    sorted_groups = sorted(
-        grouped_streams.keys(),
-        key=lambda g: GROUP_ORDER.index(g) if g in GROUP_ORDER else 99
-    )
+    # 严格按照 GROUP_ORDER 输出核心有效类别，杜绝海外杂乱分组
+    sorted_groups = [g for g in GROUP_ORDER if g in grouped_streams]
 
     for group in sorted_groups:
         streams = grouped_streams[group]
@@ -123,10 +120,8 @@ def export_txt(grouped_streams: dict[str, list[ChannelStream]], file_path: str =
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     lines = []
 
-    sorted_groups = sorted(
-        grouped_streams.keys(),
-        key=lambda g: GROUP_ORDER.index(g) if g in GROUP_ORDER else 99
-    )
+    # 严格按照 GROUP_ORDER 输出核心有效类别，杜绝海外杂乱分组
+    sorted_groups = [g for g in GROUP_ORDER if g in grouped_streams]
 
     for group in sorted_groups:
         lines.append(f"{group},#genre#")
