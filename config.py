@@ -142,8 +142,15 @@ CHANNEL_ALIASES = {
     "东森幼幼台": "东森幼幼",
     "东森洋片台": "东森洋片",
     "东森超视": "东森超视",
-    "民视新闻台": "民视新闻",
-    "民视无线台": "民视无线",
+    "民视": "民视无线台 (FTV CH6)",
+    "民视无线": "民视无线台 (FTV CH6)",
+    "民视无线台": "民视无线台 (FTV CH6)",
+    "FTV": "民视无线台 (FTV CH6)",
+    "FTVCH6": "民视无线台 (FTV CH6)",
+    "FTV6": "民视无线台 (FTV CH6)",
+    "民视新闻": "民视新闻台 HD",
+    "民视新闻台": "民视新闻台 HD",
+    "民视新闻HD": "民视新闻台 HD",
     "民视台湾台": "民视台湾",
     "民视第一台": "民视第一台",
     "台视新闻台": "台视新闻",
@@ -152,14 +159,20 @@ CHANNEL_ALIASES = {
     "中视主频": "中视",
     "华视新闻台": "华视新闻",
     "华视主频": "华视",
-    "三立新闻台": "三立新闻",
-    "三立台湾台": "三立台湾",
-    "三立都会台": "三立都会",
+    "三立戏剧": "三立戏剧台",
+    "三立戏剧台": "三立戏剧台",
+    "三立新闻": "三立新闻台",
+    "三立新闻台": "三立新闻台",
+    "三立台湾": "三立台湾台",
+    "三立台湾台": "三立台湾台",
+    "三立都会": "三立都会台",
+    "三立都会台": "三立都会台",
     "三立INEWS": "三立iNEWS",
     "年代新闻台": "年代新闻",
     "八大第一台": "八大第一台",
     "八大综合台": "八大综合台",
     "八大戏剧台": "八大戏剧台",
+    "八大戏剧": "八大戏剧台",
     "纬来日本台": "纬来日本",
     "纬来电影台": "纬来电影",
     "纬来体育台": "纬来体育",
@@ -175,10 +188,142 @@ CHANNEL_ALIASES = {
 GROUP_RULES = [
     ("央视频道", r"^CCTV|CGTN|兵器科技|第一剧场|风云剧场|怀旧剧场|电视指南|风云音乐|风云足球"),
     ("卫视频道", r".*卫视"),
-    ("台湾频道", r"(?<!易)中天|TVBS|东森|三立|民视|台视|华视|中视|纬来|年代|壹电视|八大|公视|非凡|国兴|靖天|龙祥|博斯|台湾|臺灣|寰宇|镜新闻|大立|番薯|客家|大爱"),
+    ("台湾频道", r"(?<!易)中天|TVBS|东森|三立|民视|FTV|台视|TTV|华视|CTS|中视|CTV|纬来|年代|壹电视|八大|公视|PTS|非凡|国兴|靖天|龙祥|博斯|台湾|臺灣|寰宇|镜新闻|大立|番薯|客家|大爱"),
     ("港澳频道", r"凤凰|翡翠|明珠|本港|无线|J2|ViuTV|RTHK|港台|莲花|澳视|澳亚|澳门|美亚|华丽|星空"),
     ("影视轮播", r".*电影|.*影院|.*剧场|动作|经典|喜剧|大片|悬疑|谍战"),
     ("体育赛事", r".*体育|.*足球|.*台球|.*网球|.*五星|劲爆|高尔夫"),
     ("儿童少儿", r".*少儿|.*动画|.*卡通|卡酷|嘉佳|金鹰|宝贝"),
     ("地方频道", r".*台$|.*综合|.*生活|.*新闻|.*科教|.*都市|.*经济|.*影视"),
+]
+
+# 精选重点频道专线池（经实测 100% 真实可用并经 MPEG-TS 验证，优先注入并在抓取池中测速去重）
+CURATED_STREAMS = [
+    {
+        "name": "民视无线台 (FTV CH6)",
+        "url": "http://183.239.108.37:1698/hls/133/index.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "民视",
+        "tvg_name": "民视无线台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视.png"
+    },
+    {
+        "name": "民视新闻台 HD",
+        "url": "http://38.64.72.148/hls/modn/list/4012/chunklist0.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "民视新闻",
+        "tvg_name": "民视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视新闻.png"
+    },
+    {
+        "name": "民视新闻台 HD",
+        "url": "http://38.64.72.148:80/hls/modn/list/4012/chunklist1.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "民视新闻",
+        "tvg_name": "民视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/民视新闻.png"
+    },
+    {
+        "name": "三立戏剧台",
+        "url": "http://61.221.215.25:8800/hls/41/index.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "三立戏剧",
+        "tvg_name": "三立戏剧台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/三立戏剧.png"
+    },
+    {
+        "name": "八大戏剧台",
+        "url": "http://61.221.215.25:8800/hls/39/index.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "八大戏剧",
+        "tvg_name": "八大戏剧台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/八大戏剧.png"
+    },
+    {
+        "name": "中天娱乐台",
+        "url": "http://61.221.215.25:8800/hls/47/index.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "中天娱乐",
+        "tvg_name": "中天娱乐台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/中天娱乐.png"
+    },
+    {
+        "name": "TVBS新闻台",
+        "url": "http://61.221.215.25:8800/hls/9/index.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "TVBS新闻",
+        "tvg_name": "TVBS新闻",
+        "tvg_logo": "https://live.fanmingming.cn/tv/TVBS新闻.png"
+    },
+    {
+        "name": "TVBS-Asia (亚洲台)",
+        "url": "http://38.64.72.148:80/hls/modn/list/4005/chunklist0.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "TVBS-Asia",
+        "tvg_name": "TVBS-Asia",
+        "tvg_logo": "https://live.fanmingming.cn/tv/TVBS亚洲.png"
+    },
+    {
+        "name": "台视新闻台 HD",
+        "url": "http://38.64.72.148:80/hls/modn/list/4013/chunklist0.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "台视新闻",
+        "tvg_name": "台视新闻台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/台视新闻.png"
+    },
+    {
+        "name": "东森美洲台",
+        "url": "http://38.64.72.148/hls/modn/list/2016/playlist.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "东森美洲",
+        "tvg_name": "东森美洲台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/东森美洲.png"
+    },
+    {
+        "name": "东森超视",
+        "url": "http://38.64.72.148:80/hls/modn/list/2013/chunklist1.m3u8",
+        "group": "台湾频道",
+        "tvg_id": "东森超视",
+        "tvg_name": "东森超视",
+        "tvg_logo": "https://live.fanmingming.cn/tv/东森超视.png"
+    },
+    {
+        "name": "TVB翡翠台",
+        "url": "http://183.239.108.37:1698/hls/92/index.m3u8",
+        "group": "港澳频道",
+        "tvg_id": "翡翠台",
+        "tvg_name": "TVB翡翠台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/翡翠台.png"
+    },
+    {
+        "name": "TVB明珠台",
+        "url": "http://183.239.108.37:1698/hls/93/index.m3u8",
+        "group": "港澳频道",
+        "tvg_id": "明珠台",
+        "tvg_name": "TVB明珠台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/明珠台.png"
+    },
+    {
+        "name": "凤凰资讯台",
+        "url": "http://183.239.108.37:1698/hls/95/index.m3u8",
+        "group": "港澳频道",
+        "tvg_id": "凤凰资讯",
+        "tvg_name": "凤凰资讯台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/凤凰资讯.png"
+    },
+    {
+        "name": "凤凰中文台",
+        "url": "http://183.239.108.37:1698/hls/96/index.m3u8",
+        "group": "港澳频道",
+        "tvg_id": "凤凰中文",
+        "tvg_name": "凤凰中文台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/凤凰中文.png"
+    },
+    {
+        "name": "凤凰香港台",
+        "url": "http://183.239.108.37:1698/hls/97/index.m3u8",
+        "group": "港澳频道",
+        "tvg_id": "凤凰香港",
+        "tvg_name": "凤凰香港台",
+        "tvg_logo": "https://live.fanmingming.cn/tv/凤凰香港.png"
+    },
 ]
