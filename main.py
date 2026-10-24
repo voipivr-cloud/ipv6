@@ -153,15 +153,6 @@ def main():
     export_txt(grouped, out_txt)
     report_data = export_report(len(crawled_streams), active_streams, out_report)
 
-    # 自动更新一份到电脑桌面
-    desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
-    try:
-        import shutil
-        shutil.copy2(out_m3u, os.path.join(desktop_dir, "live_ipv6.m3u"))
-        shutil.copy2(out_txt, os.path.join(desktop_dir, "live_ipv6.txt"))
-        print(f"  -> 已自动同步覆盖更新至桌面文件！")
-    except Exception:
-        pass
 
     cost_time = time.time() - start_time
     print(f"\n" + "=" * 60)
