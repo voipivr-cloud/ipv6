@@ -2,6 +2,7 @@
 格式化导出与文件生成模块
 生成标准 M3U/M3U8 播放列表、TVBox/DIYP 适用的 TXT 列表以及运行统计报告
 """
+import datetime
 import json
 import os
 import re
@@ -86,8 +87,11 @@ def export_m3u(grouped_streams: dict[str, list[ChannelStream]], file_path: str =
     导出标准 M3U 文件
     """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    cst_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
+    total_count = sum(len(v) for v in grouped_streams.values())
     lines = [
-        f'#EXTM3U x-tvg-url="{",".join(EPG_URLS)}"'
+        f'#EXTM3U x-tvg-url="{",".join(EPG_URLS)}"',
+        f'# 更新时间: {cst_now} (北京时间) | 100% 真实流切片深度验效 | 严选有效源: {total_count} 个'
     ]
 
     # 严格按照 GROUP_ORDER 输出核心有效类别，杜绝海外杂乱分组
@@ -144,6 +148,7 @@ def export_report(
     生成运行统计与运营商分布报告
     """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    cst_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
 
     isp_stats = defaultdict(int)
     group_stats = defaultdict(int)
@@ -153,6 +158,7 @@ def export_report(
         group_stats[s.group] += 1
 
     report_data = {
+        "updated_at": f"{cst_now} (CST)",
         "total_crawled": total_crawled,
         "total_active": len(active_streams),
         "available_rate": f"{(len(active_streams) / max(total_crawled, 1)) * 100:.1f}%",
