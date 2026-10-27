@@ -2,8 +2,10 @@ name: Auto Update IPv6 IPTV
 
 on:
   schedule:
-    - cron: '0 20 * * *'  # 每天北京时间凌晨 04:00 自动运行
-  workflow_dispatch:      # 支持手动触发
+    # 每天早间 06:25 与 晚间 18:25 各自动运行一次（避开整点 00 分，防止 GitHub Actions 高峰期排队或丢弃任务）
+    - cron: '25 22 * * *'  # 北京时间 06:25 每日早间自动更新
+    - cron: '25 10 * * *'  # 北京时间 18:25 每日晚间自动更新
+  workflow_dispatch:      # 支持 GitHub 网页端一键手动立即运行
 
 # 赋予云端 Actions 写入和推送仓库的权限
 permissions:
@@ -37,4 +39,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add output/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update: 100% verified playable streams [skip ci]" && git push)
+          UPDATE_TIME=$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update: $UPDATE_TIME (CST) [skip ci]" && git push)
