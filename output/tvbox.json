@@ -1,0 +1,11 @@
+{
+  "lives": [
+    {
+      "name": "IPv6/IPv4 高清严选直播",
+      "type": 0,
+      "url": "https://gh-proxy.com/raw.githubusercontent.com/voipivr-cloud/ipv6/main/output/live_ipv6.txt",
+      "epg": "https://epg.112114.xyz/pp.xml.gz",
+      "logo": "https://live.fanmingming.cn/tv/{name}.png"
+    }
+  ]
+}
