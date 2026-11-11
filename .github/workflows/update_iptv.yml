@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Crawler with Strict Live Verification
         run: |
-          python main.py --workers 35 --timeout 2.5
+          python main.py --workers 35 --timeout 3.0
 
       - name: Commit and Push Verified Streams
         run: |

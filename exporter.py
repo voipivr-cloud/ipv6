@@ -30,6 +30,19 @@ GROUP_ORDER = [
     "其他频道"
 ]
 
+GROUP_PRIORITY = {
+    "央视频道": 0,
+    "卫视频道": 1,
+    "台湾频道": 2,
+    "港澳频道": 3,
+    "影视轮播": 4,
+    "体育赛事": 5,
+    "儿童少儿": 6,
+    "地方频道": 7,
+    "YouTube频道": 8,
+    "其他频道": 9,
+}
+
 
 def cctv_sort_key(name: str):
     """CCTV 频道自然排序键"""
@@ -59,21 +72,26 @@ def group_and_filter_streams(
     for s in streams:
         channel_map[s.name].append(s)
 
-    # 每个频道内，按延迟从低到高排序（-1 未测速的排在最后）
+    # 每个频道内，统一核心分组并按延迟从低到高排序（-1 未测速的排在最后）
     for name in channel_map:
+        group_name = min(
+            (s.group for s in channel_map[name]),
+            key=lambda g: GROUP_PRIORITY.get(g, 99)
+        )
+        for s in channel_map[name]:
+            s.group = group_name
         channel_map[name].sort(
             key=lambda x: (x.latency if x.latency > 0 else 999999)
         )
         if max_sources > 0:
             channel_map[name] = channel_map[name][:max_sources]
 
-    # 按类别分桶
+    # 按类别分桶：直接使用已规整的频道分组
     grouped = defaultdict(list)
     for name, s_list in channel_map.items():
         if not s_list:
             continue
-        group_name = s_list[0].group
-        grouped[group_name].extend(s_list)
+        grouped[s_list[0].group].extend(s_list)
 
     # 央视频道内部进行数字排序
     if "央视频道" in grouped:

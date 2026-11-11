@@ -50,8 +50,9 @@ def normalize_channel_name(raw_name: str) -> str:
 
 def classify_group(channel_name: str, existing_group: str = "", url: str = "") -> str:
     """根据频道名称、原有分组和 URL，自动划分标准类别"""
-    # 优先归类 YouTube 频道
-    if "youtube.com" in url.lower() or "youtu.be" in url.lower() or "youtube" in existing_group.lower() or "油管" in existing_group or "(yt)" in channel_name.lower() or "（yt）" in channel_name.lower():
+    # 仅明确指向 YouTube 域名的链接直接归入 YouTube频道（将在 checker 中被过滤）
+    lower_url = url.lower()
+    if "youtube.com" in lower_url or "youtu.be" in lower_url or "googlevideo.com" in lower_url:
         return "YouTube频道"
 
     clean_grp = re.sub(r"[^\w\u4e00-\u9fa5]", "", existing_group)
@@ -61,6 +62,9 @@ def classify_group(channel_name: str, existing_group: str = "", url: str = "") -
     for group_name, rule_regex in GROUP_RULES:
         if re.search(rule_regex, channel_name, re.IGNORECASE):
             return group_name
+
+    if "youtube" in existing_group.lower() or "油管" in existing_group or "(yt)" in channel_name.lower() or "（yt）" in channel_name.lower():
+        return "YouTube频道"
 
     if existing_group and existing_group not in ["其他频道", "未分类", "Undefined", "General"]:
         if "央视" in clean_grp:
@@ -126,10 +130,10 @@ def parse_m3u_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
 
             norm_name = normalize_channel_name(raw_title)
 
-            # 处理可能用 # 拼接的多线路
+            # 处理可能用 # 拼接的多线路，并剔除链接尾部残留空格或说明文字
             raw_urls = line.split("#")
             for sub_url in raw_urls:
-                cleaned_url = sub_url.split("$")[0].strip()
+                cleaned_url = sub_url.split("$")[0].strip().split()[0] if sub_url.split("$")[0].strip() else ""
                 if not (cleaned_url.startswith("http://") or cleaned_url.startswith("https://")):
                     continue
 
@@ -182,10 +186,10 @@ def parse_txt_content(content: str, filter_ipv6: bool = False, resolve_dns: bool
 
             norm_name = normalize_channel_name(raw_title)
 
-            # 支持一行包含多个用 # 隔开的 URL 或 $ 分隔的说明
+            # 支持一行包含多个用 # 隔开的 URL 或 $ 分隔的说明，并剔除尾部空格噪声
             raw_urls = url_part.split("#")
             for sub_url in raw_urls:
-                cleaned_url = sub_url.split("$")[0].strip()
+                cleaned_url = sub_url.split("$")[0].strip().split()[0] if sub_url.split("$")[0].strip() else ""
                 if not (cleaned_url.startswith("http://") or cleaned_url.startswith("https://")):
                     continue
 
